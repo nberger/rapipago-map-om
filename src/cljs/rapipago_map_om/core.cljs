@@ -15,26 +15,24 @@
         (on-complete (js->clj (.getResponseJson xhr) :keywordize-keys true))))
     (. xhr (send url method))))
 
-(def app-state (atom {:search-params {}
-                      :search-result {}}))
+(def app-state (atom {:provinces []
+                      :cities []}))
 
 (defn province-filter [app owner]
   (reify
-    om/IInitState
-    (init-state [_] {:provinces []})
     om/IWillMount
     (will-mount [_]
       (json-xhr {:method "GET"
                  :url "http://localhost:3001/provinces"
-                 :on-complete #(om/set-state! owner :provinces %)}))
-    om/IRenderState
-    (render-state [_ {:keys [provinces]}]
+                 :on-complete #(om/transact! app :provinces (fn [_] %))}))
+    om/IRender
+    (render [_]
       (dom/div #js {:id "province-filter"}
                (dom/label #js {:htmlFor "province"} "Provincia")
                (apply dom/select #js {:id "province"}
                       (map #(dom/option #js {:value (:id %)}
                                         (:name %))
-                           provinces))))))
+                           (:provinces app)))))))
 
 (om/root
   province-filter
